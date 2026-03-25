@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Go！校园音乐系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
+body{background:linear-gradient(135deg,#ffecd2 0%,#fcb69f 100%);color:#333;padding:20px;max-width:1000px;margin:0 auto}
+.home{text-align:center;margin-top:60px}
+.title{font-size:3rem;color:#ff5e62;margin-bottom:40px;font-weight:bold}
+.theme-buttons{display:flex;flex-direction:column;gap:20px;align-items:center}
+.theme-btn{width:300px;padding:18px;font-size:1.2rem;border:none;border-radius:15px;background:linear-gradient(90deg,#ff5e62,#ff9966);color:white;font-weight:bold;cursor:pointer;transition:.3s}
+.theme-btn:hover{transform:scale(1.05)}
+.track-page{display:none}
+.page-header{text-align:center;margin-bottom:30px}
+.page-title{font-size:2rem;color:#ff5e62;margin-bottom:10px}
+.back-btn{padding:8px 16px;background:#ff5e62;color:white;border:none;border-radius:8px;cursor:pointer;margin-bottom:20px}
+.global-controls{text-align:center;margin:20px 0}
+.global-controls button{margin:0 10px;padding:10px 20px;border:none;border-radius:8px;background:#ff5e62;color:white;font-weight:bold;cursor:pointer}
+.status-bar{text-align:center;padding:12px;background:rgba(255,255,255,.9);border-radius:10px;margin:20px 0;font-size:1rem;color:#d9534f;font-weight:bold}
+.tracks-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.track{background:white;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.track-name{font-size:1.1rem;font-weight:bold;color:#ff5e62;text-align:center;margin-bottom:15px}
+.control-group{margin-bottom:12px}
+.control-group label{display:block;margin-bottom:5px;font-size:.9rem}
+select,input[type="range"]{width:100%;padding:6px;border-radius:6px;border:1px solid #ddd}
+.track-buttons{display:flex;gap:8px;margin-top:10px}
+.track-buttons button{flex:1;padding:6px;border:none;border-radius:6px;color:white;font-weight:bold;cursor:pointer}
+.play{background:#4CAF50}
+.mute{background:#f44336}
+.remove{background:#757575}
+</style>
+</head>
+
+<body>
+
+<!-- 首页 -->
+<div class="home" id="home">
+  <h1 class="title">Music Go！</h1>
+  <div class="theme-buttons">
+    <button class="theme-btn" onclick="openPage('page1')">课堂内外</button>
+    <button class="theme-btn" onclick="openPage('page2')">绿茵场上</button>
+    <button class="theme-btn" onclick="openPage('page3')">自由空间</button>
+  </div>
+</div>
+
+<!-- 主题1 -->
+<div class="track-page" id="page1">
+  <div class="page-header">
+    <button class="back-btn" onclick="goBack()">← 返回主页</button>
+    <h2 class="page-title">课堂内外</h2>
+  </div>
+  <div class="global-controls">
+    <button onclick="addTrack('tracks1')">➕ 添加音轨</button>
+    <button onclick="clearAll('tracks1')">🗑️ 清空本组</button>
+  </div>
+  <div class="status-bar" id="status1">当前播放：无音轨</div>
+  <div class="tracks-container" id="tracks1"></div>
+</div>
+
+<!-- 主题2 -->
+<div class="track-page" id="page2">
+  <div class="page-header">
+    <button class="back-btn" onclick="goBack()">← 返回主页</button>
+    <h2 class="page-title">绿茵场上</h2>
+  </div>
+  <div class="global-controls">
+    <button onclick="addTrack('tracks2')">➕ 添加音轨</button>
+    <button onclick="clearAll('tracks2')">🗑️ 清空本组</button>
+  </div>
+  <div class="status-bar" id="status2">当前播放：无音轨</div>
+  <div class="tracks-container" id="tracks2"></div>
+</div>
+
+<!-- 主题3 -->
+<div class="track-page" id="page3">
+  <div class="page-header">
+    <button class="back-btn" onclick="goBack()">← 返回主页</button>
+    <h2 class="page-title">自由空间</h2>
+  </div>
+  <div class="global-controls">
+    <button onclick="addTrack('tracks3')">➕ 添加音轨</button>
+    <button onclick="clearAll('tracks3')">🗑️ 清空本组</button>
+  </div>
+  <div class="status-bar" id="status3">当前播放：无音轨</div>
+  <div class="tracks-container" id="tracks3"></div>
+</div>
+
+<script>
+// ==============================
+// 每种音轨独立 5 个音频（你只改这里！）
+// ==============================
+const trackData = {
+  "节奏鼓点": [
+    {name:"鼓点 1", url:"audio/drum1.mp3"},
+    {name:"鼓点 2", url:"audio/drum2.mp3"},
+    {name:"鼓点 3", url:"audio/drum3.mp3"},
+    {name:"鼓点 4", url:"audio/drum4.mp3"},
+    {name:"鼓点 5", url:"audio/drum5.mp3"}
+  ],
+  "环境采样": [
+    {name:"环境 1", url:"audio/env1.mp3"},
+    {name:"环境 2", url:"audio/env2.mp3"},
+    {name:"环境 3", url:"audio/env3.mp3"},
+    {name:"环境 4", url:"audio/env4.mp3"},
+    {name:"环境 5", url:"audio/env5.mp3"}
+  ],
+  "贝斯编排": [
+    {name:"贝斯 1", url:"audio/bass1.mp3"},
+    {name:"贝斯 2", url:"audio/bass2.mp3"},
+    {name:"贝斯 3", url:"audio/bass3.mp3"},
+    {name:"贝斯 4", url:"audio/bass4.mp3"},
+    {name:"贝斯 5", url:"audio/bass5.mp3"}
+  ],
+  "旋律选择": [
+    {name:"旋律 1", url:"audio/mel1.mp3"},
+    {name:"旋律 2", url:"audio/mel2.mp3"},
+    {name:"旋律 3", url:"audio/mel3.mp3"},
+    {name:"旋律 4", url:"audio/mel4.mp3"},
+    {name:"旋律 5", url:"audio/mel5.mp3"}
+  ],
+  "音效叠加": [
+    {name:"音效 1", url:"audio/fx1.mp3"},
+    {name:"音效 2", url:"audio/fx2.mp3"},
+    {name:"音效 3", url:"audio/fx3.mp3"},
+    {name:"音效 4", url:"audio/fx4.mp3"},
+    {name:"音效 5", url:"audio/fx5.mp3"}
+  ]
+};
+
+const defaultTracks = ["节奏鼓点","环境采样","贝斯编排","旋律选择","音效叠加"];
+let playing = {};
+
+window.onload = function(){
+  initPage("tracks1");
+  initPage("tracks2");
+  initPage("tracks3");
+};
+
+// 初始化每个主题 5 条固定音轨
+function initPage(containerId){
+  const box = document.getElementById(containerId);
+  defaultTracks.forEach(name => createTrack(box, containerId, name));
+}
+
+// 切换页面
+function openPage(id){
+  document.querySelectorAll(".track-page").forEach(p=>p.style.display="none");
+  document.getElementById("home").style.display="none";
+  document.getElementById(id).style.display="block";
+}
+function goBack(){
+  document.querySelectorAll(".track-page").forEach(p=>p.style.display="none");
+  document.getElementById("home").style.display="block";
+}
+
+// 创建一条音轨
+function createTrack(box, pageId, trackName){
+  const list = trackData[trackName] || trackData["节奏鼓点"];
+  const div = document.createElement("div");
+  div.className = "track";
+  div.pageId = pageId;
+  div.trackName = trackName;
+
+  div.innerHTML = `
+    <div class="track-name">${trackName}</div>
+    <div class="control-group">
+      <label>选择音频</label>
+      <select class="audio-select">
+        ${list.map((o,i)=>`<option value="${i}">${o.name}</option>`).join("")}
+      </select>
+    </div>
+    <div class="control-group">
+      <label>音量</label>
+      <input type="range" class="vol" min="0" max="100" value="70">
+    </div>
+    <div class="track-buttons">
+      <button class="play">播放</button>
+      <button class="mute">静音</button>
+      <button class="remove">移除</button>
+    </div>
+  `;
+
+  const audio = new Audio();
+  audio.loop = true;
+  audio.volume = 0.7;
+  audio.src = list[0].url;
+  div.audio = audio;
+  bindTrack(div);
+  box.appendChild(div);
+}
+
+function bindTrack(track){
+  const a = track.audio;
+  const play = track.querySelector(".play");
+  const mute = track.querySelector(".mute");
+  const del = track.querySelector(".remove");
+  const sel = track.querySelector(".audio-select");
+  const vol = track.querySelector(".vol");
+  const pageId = track.pageId;
+  const list = trackData[track.trackName] || trackData["节奏鼓点"];
+
+  play.onclick = () => {
+    if(a.paused){a.play();play.textContent="暂停";playing[pageId]=(playing[pageId]||0)+1}
+    else{a.pause();play.textContent="播放";playing[pageId]=Math.max((playing[pageId]||0)-1,0)}
+    updateStatus(pageId);
+  };
+  mute.onclick = () => {a.muted=!a.muted;mute.textContent=a.muted?"取消静音":"静音"};
+  sel.onchange = () => {const was=!a.paused;a.src=list[sel.value].url;if(was)a.play()};
+  vol.oninput = () => a.volume = vol.value/100;
+  del.onclick = () => {a.pause();track.remove();playing[pageId]=Math.max((playing[pageId]||0)-1,0);updateStatus(pageId)};
+}
+
+// 添加/清空
+function addTrack(containerId){
+  const box = document.getElementById(containerId);
+  createTrack(box, containerId, "节奏鼓点");
+}
+function clearAll(containerId){
+  document.querySelectorAll(`#${containerId} .track`).forEach(t=>{t.audio.pause();t.remove()});
+  playing[containerId]=0;updateStatus(containerId);
+}
+
+function updateStatus(pageId){
+  const n=playing[pageId]||0;
+  const el=document.getElementById(`status${pageId.slice(-1)}`);
+  el.textContent=n?`当前播放：${n} 个音轨`:"当前播放：无音轨";
+}
+</script>
+</body>
+</html>
